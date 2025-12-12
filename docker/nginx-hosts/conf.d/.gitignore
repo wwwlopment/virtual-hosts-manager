@@ -1,0 +1,5 @@
+# Ignore all config files
+*.conf
+
+# But keep .gitkeep
+!.gitkeep

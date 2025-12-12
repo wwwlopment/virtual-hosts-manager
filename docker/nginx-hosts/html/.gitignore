@@ -1,0 +1,5 @@
+# Ignore all virtual host directories
+*/
+
+# But keep .gitkeep
+!.gitkeep

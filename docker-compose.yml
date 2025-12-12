@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: nginx-manager-app
+    user: "1000:1000"
+    volumes:
+      - ./app:/var/www/html
+      - ./docker/nginx-hosts/conf.d:/home/appuser/conf.d
+      - ./docker/nginx-hosts/html:/home/appuser/virtual
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_GID:-140}"  # GID docker in the host
+
+  nginx-app:
+    image: nginx:1.25
+    container_name: nginx-manager-nginx-app
+    depends_on:
+      - app
+      - node
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app/public:/var/www/html/public
+      - ./docker/nginx-app/conf.d:/etc/nginx/conf.d
+
+  nginx-hosts:
+    image: nginx:1.25
+    container_name: nginx-manager-nginx-hosts
+    ports:
+      - "8081-8100:8081-8100"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/nginx-hosts/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx-hosts/html:/home/appuser/virtual
+
+  node:
+    image: node:20
+    container_name: nginx-manager-node
+    user: "1000:1000"
+    working_dir: /var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./app:/var/www/html
